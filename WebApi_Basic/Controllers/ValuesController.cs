@@ -22,8 +22,8 @@ using System.Web.Http;
  *   4.3. Method Definitions
         4.3.1. GET - R (Read)
         4.3.2. HEAD - запрос заголовков (без тела) - в API не используется
-        4.3.3. POST - U (Update)
-        4.3.4. PUT - C (Create)
+        4.3.3. POST - U (Update) / C (Create)
+        4.3.4. PUT - C (Create) / U (Update)
         4.3.5. DELETE - D (Delete)
         4.3.6. CONNECT - Туннелирование (часть серии запросов) - в API не используется
         4.3.7. OPTIONS - в API не используется
@@ -31,35 +31,89 @@ using System.Web.Http;
  */
 
 
+/*
+ * ASP-WebAPI - сборка на базе MVC, реализующая API
+ * - наличие ValueController
+ * - наличие инфо-страницы (HELP) -> AreaRegistration.RegisterAllAreas();
+ * - изменена маршрутизация Values/Get -> api/values
+ *      (распознавание метода контроллера - по методу запроса)
+ *      a) Application_Start() -> GlobalConfiguration.Configure(WebApiConfig.Register);
+ *      b) public static class WebApiConfig
+ * - Результат возврата "оборачивается" в XML
+ * 
+ * Соглашения:
+ *  - Количество методов ограничено
+ *  - Имена методов контроллеров совпадают или начинаются с названия метода-запроса
+ *  Get(), GetBook()
+ *  Post(), PostBook()
+ *  Либо указываются при помощи атрибутов
+ *  [HttpPost]
+ *  UpdateBook(...)
+ * */
+
+
 namespace WebApi_Basic.Controllers
 {
     public class ValuesController : ApiController
     {
+        List<String> strings { get; set; }
+
+        public ValuesController()
+        {
+            strings = new List<string>()
+            {
+                "Some value 1",
+                "Some value 2",
+                "Some value 3",
+                "Some value 4",
+                "Some value 5"
+            };
+
+        }
+
         // GET api/values
         public IEnumerable<string> Get()
         {
-            return new string[] { "value1", "value2" };
+            return strings;
         }
 
         // GET api/values/5
         public string Get(int id)
         {
-            return "value";
+            if (id > strings.Count)
+                return $"Id {id} not available";
+            return strings[id];
         }
 
+        //// POST api/values
+        //public void Post([FromBody]string value)
+        //{
+        //    strings.Add(value);
+        //}
+
         // POST api/values
-        public void Post([FromBody]string value)
+        public String Post([FromBody]string value)
         {
+            strings.Add(value);
+            return value;
         }
 
         // PUT api/values/5
-        public void Put(int id, [FromBody]string value)
+        public String Put(int id, [FromBody]string value)
         {
+            if (id >= strings.Count || id < 0)
+                return $"Id {id} not available";
+            strings[id] = value;
+            return strings[id];
         }
 
         // DELETE api/values/5
-        public void Delete(int id)
+        public String Delete(int id)
         {
+            if (id > strings.Count)
+                return $"Id {id} not available";
+            strings.RemoveAt(id);
+            return "Delete success";
         }
     }
 }
